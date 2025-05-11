@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>竞赛对阵图</title>
+  <!-- 引入Element Plus样式 -->
+  <link rel="stylesheet" href="/pub/base.css">
+  <!-- 引入Vue 3.2 -->
+  <script src="/pub/vue.global.js"></script>
+  <!-- 引入Element Plus -->
+  <script src="/pub/index.full.js"></script>
+  <!-- 不使用单独的图标包，改用Element Plus自带图标 -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #f5f7fa;
+      padding: 20px;
+    }
+    
+    .tournament-container {
+      width: 100%;
+      overflow-x: auto;
+      position: relative;
+      padding: 20px 10px;
+    }
+    
+    .tournament-bracket {
+      display: flex;
+      justify-content: space-between;
+      min-width: 900px;
+      position: relative;
+    }
+    
+    .round {
+      display: flex;
+      flex-direction: column;
+      margin: 0 20px;
+      min-width: 200px;
+      position: relative;
+    }
+    
+    .match-container {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      margin-bottom: 30px;
+    }
+    
+    /* 连接线逻辑 */
+    .connect-line {
+      background-color: #409eff;
+      z-index: 1;
+      pointer-events: none;
+      position: absolute;
+    }
+    
+    .horizontal-line {
+      height: 3px;
+    }
+    
+    .vertical-line {
+      width: 3px;
+    }
+    
+    .connect-line-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    
+    .match {
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+      background-color: #fff;
+      width: 200px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .match-date {
+      font-size: 12px;
+      color: #606266;
+      text-align: center;
+      padding: 5px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .team {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      position: relative;
+    }
+    
+    .team:first-child {
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .team-logo {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .team-logo img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    
+    .team-name {
+      font-size: 14px;
+      flex-grow: 1;
+    }
+    
+    .team-score {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border-radius: 4px;
+      margin-left: 5px;
+    }
+    
+    .winner .team-score {
+      background-color: #f56c6c;
+      color: white;
+    }
+    
+    .loser .team-score {
+      background-color: #909399;
+      color: white;
+    }
+    
+    /* 输的比赛分数背景 */
+    .team-score {
+      background-color: #f2f6fc;
+    }
+    
+    /* 赢的比赛分数背景会覆盖上面的样式 */
+    .winner .team-score {
+      background-color: #f56c6c;
+      color: white;
+    }
+    
+    .team.winner {
+      background-color: rgba(245, 108, 108, 0.05);
+    }
+    
+    .team.winner .team-name {
+      font-weight: bold;
+    }
+    
+    .connector {
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      width: 20px;
+      border-top: 2px solid #dcdfe6;
+    }
+    
+    .vertical-connector {
+      position: absolute;
+      top: 50%;
+      right: -20px;
+      height: calc(100% + 30px);
+      border-right: 2px solid #dcdfe6;
+    }
+    
+
+    
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 5px;
+    }
+    
+    .action-button {
+      padding: 2px 8px;
+      font-size: 12px;
+      margin: 0 2px;
+      cursor: pointer;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+      background-color: #f5f7fa;
+      transition: all 0.3s;
+      user-select: none;
+    }
+    
+    .action-button:hover {
+      background-color: #ecf5ff;
+      color: #409eff;
+      border-color: #c6e2ff;
+    }
+    
+    /* 提示框样式 */
+    .tooltip {
+      position: fixed;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      z-index: 9999;
+      pointer-events: none;
+      transform: translate(-50%, -100%);
+      margin-top: -10px;
+      white-space: nowrap;
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .tooltip:after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid rgba(0, 0, 0, 0.8);
+    }
+    
+    /* 响应式设计 */
+    @media screen and (max-width: 768px) {
+      .tournament-bracket {
+        flex-direction: column;
+        min-width: auto;
+      }
+      
+      .round {
+        margin: 20px 0;
+        width: 100%;
+      }
+      
+      .match {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto 10px;
+      }
+      
+      .match-container {
+        margin-bottom: 15px;
+      }
+      
+      .connect-line {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 提示框 -->
+    <div class="tooltip" v-if="tooltipVisible" :style="{left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px'}">
+      {{ tooltipMessage }}
+    </div>
+    <el-container>
+      <el-main>
+        <h2 style="text-align: center; margin-bottom: 20px;">电竞赛事对阵图</h2>
+        <el-row>
+          <el-col :span="24">
+            <el-card class="box-card" shadow="hover">
+        
+        <div class="tournament-container">
+          <div class="tournament-bracket" ref="bracketRef">
+            <!-- 第一轮 -->
+            <div class="round">
+              <div class="match-container" v-for="match in firstRound" :key="match.id">
+                <div class="match-date">{{ match.date }}</div>
+                <div class="match">
+                  <div class="team" :class="{ 'winner': match.team1.score > match.team2.score }">
+                    <div class="team-logo">
+                      <el-icon v-if="match.team1.icon"><component :is="match.team1.icon" /></el-icon>
+                      <span v-else>{{ match.team1.shortName }}</span>
+                    </div>
+                    <div class="team-name">{{ match.team1.name }}</div>
+                    <div class="team-score" :class="{ 'winner': match.team1.score > match.team2.score }">
+                      {{ match.team1.score }}
+                    </div>
+                  </div>
+                  <div class="team" :class="{ 'winner': match.team2.score > match.team1.score }">
+                    <div class="team-logo">
+                      <el-icon v-if="match.team2.icon"><component :is="match.team2.icon" /></el-icon>
+                      <span v-else>{{ match.team2.shortName }}</span>
+                    </div>
+                    <div class="team-name">{{ match.team2.name }}</div>
+                    <div class="team-score" :class="{ 'winner': match.team2.score > match.team1.score }">
+                      {{ match.team2.score }}
+                    </div>
+                  </div>
+                </div>
+                <div class="action-buttons">
+                  <div class="action-button" @click="showTooltip('数据加载中...')"> 数据</div>
+                  <div class="action-button" @click="showTooltip('视频加载中...')"> 视频</div>
+                </div>
+                
+              </div>
+            </div>
+            
+            <!-- 第二轮 -->
+            <div class="round">
+              <div class="match-container" v-for="match in secondRound" :key="match.id">
+                <div class="match-date">{{ match.date }}</div>
+                <div class="match">
+                  <div class="team" :class="{ 'winner': match.team1.score > match.team2.score }">
+                    <div class="team-logo">
+                      <el-icon v-if="match.team1.icon"><component :is="match.team1.icon" /></el-icon>
+                      <span v-else>{{ match.team1.shortName }}</span>
+                    </div>
+                    <div class="team-name">{{ match.team1.name }}</div>
+                    <div class="team-score" :class="{ 'winner': match.team1.score > match.team2.score }">
+                      {{ match.team1.score }}
+                    </div>
+                  </div>
+                  <div class="team" :class="{ 'winner': match.team2.score > match.team1.score }">
+                    <div class="team-logo">
+                      <el-icon v-if="match.team2.icon"><component :is="match.team2.icon" /></el-icon>
+                      <span v-else>{{ match.team2.shortName }}</span>
+                    </div>
+                    <div class="team-name">{{ match.team2.name }}</div>
+                    <div class="team-score" :class="{ 'winner': match.team2.score > match.team1.score }">
+                      {{ match.team2.score }}
+                    </div>
+                  </div>
+                </div>
+                <div class="action-buttons">
+                  <div class="action-button" @click="showTooltip('数据加载中...')"> 数据</div>
+                  <div class="action-button" @click="showTooltip('视频加载中...')"> 视频</div>
+                </div>
+                
+              </div>
+            </div>
+            
+            <!-- 第三轮 -->
+            <div class="round">
+              <div class="match-container" v-for="match in thirdRound" :key="match.id">
+                <div class="match-date">{{ match.date }}</div>
+                <div class="match">
+                  <div class="team" :class="{ 'winner': match.team1.score > match.team2.score }">
+                    <div class="team-logo">
+                      <el-icon v-if="match.team1.icon"><component :is="match.team1.icon" /></el-icon>
+                      <span v-else>{{ match.team1.shortName }}</span>
+                    </div>
+                    <div class="team-name">{{ match.team1.name }}</div>
+                    <div class="team-score" :class="{ 'winner': match.team1.score > match.team2.score }">
+                      {{ match.team1.score }}
+                    </div>
+                  </div>
+                  <div class="team" :class="{ 'winner': match.team2.score > match.team1.score }">
+                    <div class="team-logo">
+                      <el-icon v-if="match.team2.icon"><component :is="match.team2.icon" /></el-icon>
+                      <span v-else>{{ match.team2.shortName }}</span>
+                    </div>
+                    <div class="team-name">{{ match.team2.name }}</div>
+                    <div class="team-score" :class="{ 'winner': match.team2.score > match.team1.score }">
+                      {{ match.team2.score }}
+                    </div>
+                  </div>
+                </div>
+                <div class="action-buttons">
+                  <div class="action-button" @click="showTooltip('数据加载中...')"> 数据</div>
+                  <div class="action-button" @click="showTooltip('视频加载中...')"> 视频</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </el-main>
+    </el-container>
+  </div>
+
+  <script>
+    const { createApp, ref, reactive, onMounted, onUnmounted } = Vue;
+    // 不使用单独的图标包
+    
+    const app = createApp({
+      setup() {
+        const bracketRef = ref(null);
+        
+        // 提示框状态
+        const tooltipVisible = ref(false);
+        const tooltipMessage = ref('');
+        const tooltipPosition = reactive({ x: 0, y: 0 });
+        
+        // 显示提示框
+        const showTooltip = (message, event) => {
+          tooltipMessage.value = message;
+          
+          // 如果有事件对象，使用其坐标，否则使用鼠标坐标
+          if (event) {
+            tooltipPosition.x = event.clientX;
+            tooltipPosition.y = event.clientY;
+          } else {
+            tooltipPosition.x = window.event.clientX;
+            tooltipPosition.y = window.event.clientY;
+          }
+          
+          tooltipVisible.value = true;
+          
+          // 2秒后自动隐藏
+          setTimeout(() => {
+            tooltipVisible.value = false;
+          }, 2000);
+        };
+        
+        // 重新实现连接线绘制逻辑
+        const drawConnections = () => {
+          // 确保 DOM 元素存在
+          if (!bracketRef.value || !document.body.contains(bracketRef.value)) return;
+          
+          // 清除旧的连接线
+          const oldLines = document.querySelectorAll('.connect-line-container');
+          oldLines.forEach(line => line.remove());
+          
+          // 创建一个容器来放置所有连接线
+          const container = document.createElement('div');
+          container.className = 'connect-line-container';
+          container.style.position = 'absolute';
+          container.style.top = '0';
+          container.style.left = '0';
+          container.style.width = '100vw';
+          container.style.height = '100vh';
+          container.style.pointerEvents = 'none';
+          container.style.zIndex = '1';
+          document.body.appendChild(container);
+          
+          // 获取所有轮次
+          // 确保元素存在再获取其属性
+          const tournamentContainer = bracketRef.value ? bracketRef.value.querySelector('.tournament-container') : null;
+          const containerRect = tournamentContainer ? tournamentContainer.getBoundingClientRect() : null;
+          const rounds = bracketRef.value.querySelectorAll('.round');
+          
+          // 对每一轮进行处理（除了最后一轮）
+          for (let i = 0; i < rounds.length - 1; i++) {
+            const currentRound = rounds[i];
+            const nextRound = rounds[i + 1];
+            
+            const currentMatches = currentRound.querySelectorAll('.match');
+            const nextMatches = nextRound.querySelectorAll('.match');
+            
+            // 处理每一对连接
+            for (let j = 0; j < Math.floor(currentMatches.length / 2); j++) {
+              // 当前轮次的两场比赛
+              const match1 = currentMatches[j * 2];
+              const match2 = currentMatches[j * 2 + 1];
+              
+              // 下一轮次的对应比赛
+              const nextMatch = nextMatches[j];
+              
+              if (!match1 || !match2 || !nextMatch) continue;
+              
+              const match1Rect = match1.getBoundingClientRect();
+              const match2Rect = match2.getBoundingClientRect();
+              const nextMatchRect = nextMatch.getBoundingClientRect();
+              
+              // 计算垂直连接线的中点
+              const midX = (match1Rect.right + nextMatchRect.left) / 2;
+              
+              // 绘制从第一个比赛到中间的水平线
+              const line1 = document.createElement('div');
+              line1.className = 'connect-line horizontal-line';
+              container.appendChild(line1);
+              
+              line1.style.position = 'absolute';
+              line1.style.left = `${match1Rect.right}px`;
+              line1.style.top = `${match1Rect.top + match1Rect.height / 2}px`;
+              line1.style.width = `${midX - match1Rect.right}px`;
+              
+              // 绘制从第二个比赛到中间的水平线
+              const line2 = document.createElement('div');
+              line2.className = 'connect-line horizontal-line';
+              container.appendChild(line2);
+              
+              line2.style.position = 'absolute';
+              line2.style.left = `${match2Rect.right}px`;
+              line2.style.top = `${match2Rect.top + match2Rect.height / 2}px`;
+              line2.style.width = `${midX - match2Rect.right}px`;
+              
+              // 绘制垂直连接线
+              const verticalLine = document.createElement('div');
+              verticalLine.className = 'connect-line vertical-line';
+              container.appendChild(verticalLine);
+              
+              verticalLine.style.position = 'absolute';
+              verticalLine.style.left = `${midX}px`;
+              verticalLine.style.top = `${match1Rect.top + match1Rect.height / 2}px`;
+              verticalLine.style.height = `${(match2Rect.top + match2Rect.height / 2) - (match1Rect.top + match1Rect.height / 2)}px`;
+              
+              // 绘制从垂直线到下一轮比赛的水平线
+              const line3 = document.createElement('div');
+              line3.className = 'connect-line horizontal-line';
+              container.appendChild(line3);
+              
+              const midY = (match1Rect.top + match1Rect.height / 2 + match2Rect.top + match2Rect.height / 2) / 2;
+              
+              line3.style.position = 'absolute';
+              line3.style.left = `${midX}px`;
+              line3.style.top = `${midY}px`;
+              line3.style.width = `${nextMatchRect.left - midX}px`;
+            }
+            
+            // 处理单个比赛的情况（如果有奇数场比赛）
+            if (currentMatches.length % 2 !== 0) {
+              const lastMatch = currentMatches[currentMatches.length - 1];
+              const nextMatchIndex = Math.floor(currentMatches.length / 2);
+              
+              if (nextMatchIndex < nextMatches.length) {
+                const nextMatch = nextMatches[nextMatchIndex];
+                
+                const lastMatchRect = lastMatch.getBoundingClientRect();
+                const nextMatchRect = nextMatch.getBoundingClientRect();
+                
+                // 直接绘制从当前比赛到下一轮的水平线
+                const line = document.createElement('div');
+                line.className = 'connect-line horizontal-line';
+                container.appendChild(line);
+                
+                line.style.position = 'absolute';
+                line.style.left = `${lastMatchRect.right}px`;
+                line.style.top = `${lastMatchRect.top + lastMatchRect.height / 2}px`;
+                line.style.width = `${nextMatchRect.left - lastMatchRect.right}px`;
+              }
+            }
+          }
+        };
+        
+        // 在组件挂载后绘制连接线
+        onMounted(() => {
+          // 等待DOM完全渲染
+          setTimeout(drawConnections, 500);
+          
+          // 添加窗口大小变化事件监听
+          window.addEventListener('resize', () => {
+            // 防抖处理
+            clearTimeout(window.resizeTimer);
+            window.resizeTimer = setTimeout(drawConnections, 200);
+          });
+        });
+        
+        // 在组件卸载前移除事件监听
+        onUnmounted(() => {
+          window.removeEventListener('resize', drawConnections);
+        });
+        // 第一轮比赛数据
+        const firstRound = ref([
+          {
+            id: 1,
+            date: '2月22日 14:00',
+            team1: { name: 'TT', shortName: 'TT', score: 1, icon: 'Sunny' },
+            team2: { name: 'JDG', shortName: 'JDG', score: 3, icon: '' }
+          },
+          {
+            id: 2,
+            date: '2月22日 17:00',
+            team1: { name: 'NIP', shortName: 'NIP', score: 2, icon: '' },
+            team2: { name: 'AL', shortName: 'AL', score: 3, icon: '' }
+          },
+          {
+            id: 3,
+            date: '2月23日 14:00',
+            team1: { name: 'BLG', shortName: 'BLG', score: 3, icon: '' },
+            team2: { name: 'WBG', shortName: 'WBG', score: 1, icon: '' }
+          },
+          {
+            id: 4,
+            date: '2月23日 17:00',
+            team1: { name: 'TES', shortName: 'TES', score: 3, icon: 'Orange' },
+            team2: { name: 'IG', shortName: 'IG', score: 1, icon: '' }
+          }
+        ]);
+        
+        // 第二轮比赛数据
+        const secondRound = ref([
+          {
+            id: 5,
+            date: '2月24日 14:00',
+            team1: { name: 'BLG', shortName: 'BLG', score: 3, icon: '' },
+            team2: { name: 'TT', shortName: 'TT', score: 1, icon: 'Sunny' }
+          },
+          {
+            id: 6,
+            date: '2月24日 17:00',
+            team1: { name: 'TES', shortName: 'TES', score: 3, icon: 'Orange' },
+            team2: { name: 'NIP', shortName: 'NIP', score: 1, icon: '' }
+          },
+          {
+            id: 7,
+            date: '2月25日 17:00',
+            team1: { name: 'JDG', shortName: 'JDG', score: 2, icon: '' },
+            team2: { name: 'AL', shortName: 'AL', score: 3, icon: '' }
+          },
+          {
+            id: 8,
+            date: '2月26日 17:00',
+            team1: { name: 'BLG', shortName: 'BLG', score: 1, icon: '' },
+            team2: { name: 'TES', shortName: 'TES', score: 3, icon: 'Orange' }
+          }
+        ]);
+        
+        // 第三轮比赛数据
+        const thirdRound = ref([
+          {
+            id: 9,
+            date: '2月27日 17:00',
+            team1: { name: 'TES', shortName: 'TES', score: 3, icon: 'Orange' },
+            team2: { name: 'JDG', shortName: 'JDG', score: 1, icon: '' }
+          },
+          {
+            id: 10,
+            date: '3月01日 17:00',
+            team1: { name: 'AL', shortName: 'AL', score: 1, icon: '' },
+            team2: { name: 'TES', shortName: 'TES', score: 3, icon: 'Orange' }
+          }
+        ]);
+        
+        return {
+          bracketRef,
+          firstRound,
+          secondRound,
+          thirdRound,
+          tooltipVisible,
+          tooltipMessage,
+          tooltipPosition,
+          showTooltip
+        };
+      }
+    });
+    
+    app.use(ElementPlus);
+    app.mount('#app');
+  </script>
+</body>
+</html>

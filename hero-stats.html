@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英雄数据统计</title>
+  <!-- 引入Vue 3 -->
+  <link rel="stylesheet" href="/pub/base.css">
+  <!-- 引入Vue 3.2 -->
+  <script src="/pub/vue.global.js"></script>
+  <!-- 引入Element Plus -->
+  <script src="/pub/index.full.js"></script>
+  <script src="./hero.js?v=1"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+    }
+    
+    .header h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #303133;
+      margin: 0;
+    }
+    
+    .hero-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .hero-item {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #ebeef5;
+      padding-bottom: 15px;
+      position: relative;
+    }
+    
+    .hero-rank {
+      font-size: 18px;
+      font-weight: bold;
+      color: #555;
+      margin-right: 15px;
+      width: 30px;
+      text-align: center;
+    }
+    
+    .hero-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      margin-right: 15px;
+      background-color: #eee;
+      overflow: hidden;
+    }
+    
+    .hero-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .hero-info {
+      flex: 1;
+    }
+    
+    .hero-bar-container {
+      height: 24px;
+      background-color: #f2f6fc;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    
+    .hero-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    /* 不同数值范围的颜色 */
+    .hero-bar.level-1 {
+      background-color: #67c23a; /* 很低 (<0.3) - 绿色 */
+    }
+    
+    .hero-bar.level-2 {
+      background-color: #e6a23c; /* 低 (0.3-0.5) - 黄色 */
+    }
+    
+    .hero-bar.level-3 {
+      background-color: #f56c6c; /* 中 (0.5-0.7) - 红色 */
+    }
+    
+    .hero-bar.level-4 {
+      background-color: #909399; /* 高 (0.7-0.9) - 灰色 */
+    }
+    
+    .hero-bar.level-5 {
+      background-color: #409eff; /* 很高 (>0.9) - 蓝色 */
+    }
+    
+    .ban-rate .hero-bar {
+      /* 禁用率默认颜色，已由等级控制 */
+    }
+    
+    .pick-rate .hero-bar {
+      /* 使用率默认颜色，已由等级控制 */
+    }
+    
+    .death-rate .hero-bar {
+      /* 死亡率默认颜色，已由等级控制 */
+    }
+    
+    .hero-rate {
+      position: absolute;
+      right: 10px;
+      top: 2px;
+      font-size: 14px;
+      color: #fff;
+      text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    }
+    
+    .hero-count {
+      font-size: 14px;
+      color: #909399;
+    }
+    
+    .hero-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: #303133;
+      margin-top: 5px;
+    }
+    
+    .el-tabs {
+      margin-bottom: 20px;
+    }
+    
+    .el-tabs__nav {
+      border-radius: 4px;
+    }
+    
+    /* 响应式布局 */
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .hero-rank {
+        margin-right: 10px;
+        width: 20px;
+      }
+      
+      .hero-avatar {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+      }
+      
+      .hero-name {
+        font-size: 14px;
+      }
+      
+      .hero-count {
+        font-size: 12px;
+      }
+    }
+    .el-alert__content{
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <el-alert
+        v-if="dataLoaded"
+        title="数据加载成功"
+        type="success"
+        description="数据来源：本地数据文件"
+        show-icon
+        closable
+      />
+      <div class="header">
+        <h2>选手数据排行</h2>
+        <el-icon><arrow-right /></el-icon>
+        <span>
+          {{ 
+            activeTab === 'banRate' ? '击杀参与率' : 
+            activeTab === 'pickRate' ? '比赛胜率' : 
+            activeTab === 'deathRate' ? '死亡率' : 
+            '位置明细'
+          }}
+        </span>
+      </div>
+      <el-tabs v-model="activeTab" @tab-click="handleTabClick" type="border-card">
+        <el-tab-pane label="击杀参与率" name="banRate">
+          <div class="ban-rate">
+            <div class="hero-list">
+              <div v-for="(hero, index) in displayedHeroes" :key="hero.heroId" class="hero-item">
+                <div class="hero-rank">{{ index + 1 }}</div>
+                <div class="hero-avatar">
+                  <img :src="getHeroImageUrl(hero.heroId)" @error="handleImageError" alt="" />
+                </div>
+                <div class="hero-info">
+                  <div class="hero-count">死亡数: {{ hero.count }}</div>
+                  <div class="hero-bar-container">
+                    <div class="hero-bar" :class="getBarColorClass(hero.rate)" :style="{ width: getBarHeight(hero.rate) }"></div>
+                    <div class="hero-rate">{{ hero.rate }}%</div>
+                  </div>
+                  <div class="hero-name">{{ hero.heroName }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="比赛胜率" name="pickRate">
+          <div class="pick-rate">
+            <div class="hero-list">
+              <div v-for="(hero, index) in displayedHeroes" :key="hero.heroId" class="hero-item">
+                <div class="hero-rank">{{ index + 1 }}</div>
+                <div class="hero-avatar">
+                  <img :src="getHeroImageUrl(hero.heroId)" @error="handleImageError" alt="" />
+                </div>
+                <div class="hero-info">
+                  <div class="hero-count">击杀+助攻: {{ hero.count }}</div>
+                  <div class="hero-bar-container">
+                    <div class="hero-bar" :class="getBarColorClass(hero.rate)" :style="{ width: getBarHeight(hero.rate) }"></div>
+                    <div class="hero-rate">{{ hero.rate }}%</div>
+                  </div>
+                  <div class="hero-name">{{ hero.heroName }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="死亡率" name="deathRate">
+          <div class="death-rate">
+            <div class="hero-list">
+              <div v-for="(hero, index) in displayedHeroes" :key="hero.heroId" class="hero-item">
+                <div class="hero-rank">{{ index + 1 }}</div>
+                <div class="hero-avatar">
+                  <img :src="getHeroImageUrl(hero.heroId)" @error="handleImageError" alt="" />
+                </div>
+                <div class="hero-info">
+                  <div class="hero-count">比赛数: {{ hero.count }}</div>
+                  <div class="hero-bar-container">
+                    <div class="hero-bar" :class="getBarColorClass(hero.rate)" :style="{ width: getBarHeight(hero.rate) }"></div>
+                    <div class="hero-rate">{{ hero.rate }}%</div>
+                  </div>
+                  <div class="hero-name">{{ hero.heroName }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="位置明细" name="locationDetail">
+          <div class="location-detail">
+            <el-collapse accordion>
+              <el-collapse-item v-for="group in displayedLocationGroups" :key="group.location" :title="getPositionName(group.location) + ' (' + group.players.length + '人)'">
+                <div class="hero-list">
+                  <div v-for="(hero, index) in group.players" :key="hero.heroId" class="hero-item">
+                    <div class="hero-rank">{{ index + 1 }}</div>
+                    <div class="hero-avatar">
+                      <img :src="getHeroImageUrl(hero.heroId)" @error="handleImageError" alt="" />
+                    </div>
+                    <div class="hero-info">
+                      <div class="hero-count">比赛数: {{ hero.count }}</div>
+                      <div class="hero-bar-container">
+                        <div class="hero-bar" :class="getBarColorClass(hero.rate)" :style="{ width: getBarHeight(hero.rate) }"></div>
+                        <div class="hero-rate">{{ hero.rate }}%</div>
+                      </div>
+                      <div class="hero-name">{{ hero.heroName }}</div>
+                    </div>
+                  </div>
+                </div>
+              </el-collapse-item>
+            </el-collapse>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+    
+    const app = createApp({
+      setup() {
+        const loading = ref(false);
+        const dataLoaded = ref(false);
+        const activeTab = ref('banRate');
+        const heroData = ref({
+          banRate: [],
+          pickRate: [],
+          deathRate: [],
+          locationDetail: []
+        });
+        
+        // 直接加载数据，简化逻辑
+        const fetchData = () => {
+          console.log('开始获取选手数据');
+          loading.value = true;
+
+          // 直接尝试获取窗口对象中的数据
+          const playerData = window.heroData;
+
+
+          if (playerData && Array.isArray(playerData) && playerData.length > 0) {
+            try {
+              // 处理击杀参与率数据
+              heroData.value.banRate = playerData
+                .filter(player => player && typeof player.killParticipantPercent === 'number')
+                .sort((a, b) => (b.killParticipantPercent || 0) - (a.killParticipantPercent || 0))
+                .map(player => ({
+                  heroId: player.playerId,
+                  heroName: player.playerName,
+                  rate: Math.round((player.killParticipantPercent || 0) * 100),
+                  count: player.totalDeath || 0
+                }));
+              
+              // 处理比赛胜率数据
+              heroData.value.pickRate = playerData
+                .filter(player => player && typeof player.matchWinRate === 'number')
+                .sort((a, b) => (b.matchWinRate || 0) - (a.matchWinRate || 0))
+                .map(player => ({
+                  heroId: player.playerId,
+                  heroName: player.playerName,
+                  rate: Math.round((player.matchWinRate || 0) * 100),
+                  count: (player.totalKills || 0) + (player.totalAssists || 0)
+                }));
+              
+              // 处理死亡率数据 (死亡数/比赛数)
+              heroData.value.deathRate = playerData
+                .filter(player => player && player.totalDeath && player.matchCount)
+                .map(player => ({
+                  heroId: player.playerId,
+                  heroName: player.playerName,
+                  // 计算每场比赛的死亡率
+                  rate: Math.round((player.totalDeath / (player.matchCount || 1)) * 100) / 100,
+                  count: player.matchCount || 0
+                }))
+                .sort((a, b) => b.rate - a.rate)
+                .map(player => ({
+                  ...player,
+                  rate: Math.round(player.rate * 100) // 转换为百分比
+                }));
+              
+              // 处理位置明细数据 - 按位置分组
+              const locationGroups = {};
+              playerData.forEach(player => {
+                if (player && player.playerLocation) {
+                  const location = player.playerLocation;
+                  if (!locationGroups[location]) {
+                    locationGroups[location] = [];
+                  }
+                  locationGroups[location].push({
+                    heroId: player.playerId,
+                    heroName: player.playerName,
+                    location: location,
+                    // 从positionStat中获取位置使用率
+                    positionUsage: player.positionStat ? 
+                      player.positionStat.find(p => p.position === location)?.hero_use_rate || 0 : 0,
+                    rate: Math.round((player.matchWinRate || 0) * 100),
+                    count: player.matchCount || 0
+                  });
+                }
+              });
+              
+              // 转换为数组格式并按照位置使用率排序
+              heroData.value.locationDetail = Object.entries(locationGroups).map(([location, players]) => ({
+                location,
+                players: players.sort((a, b) => b.positionUsage - a.positionUsage)
+              }));
+              
+              console.log('数据处理完成:', {
+                banRate: heroData.value.banRate,
+                pickRate: heroData.value.pickRate
+              });
+              
+              dataLoaded.value = true;
+            } catch (error) {
+              console.error('处理数据时出错:', error);
+            }
+          } else {
+            console.error('没有找到有效的选手数据，使用模拟数据');
+          }
+          
+          loading.value = false;
+        };
+        
+      
+        
+        // 根据当前标签显示对应数据
+        const displayedHeroes = computed(() => {
+          if (activeTab.value === 'locationDetail') return [];
+          const heroes = heroData.value[activeTab.value] || [];
+          console.log(heroes,heroes.length  )
+          return heroes;
+        });
+        
+        // 获取位置分组数据
+        const displayedLocationGroups = computed(() => {
+          if (activeTab.value !== 'locationDetail') return [];
+          return heroData.value.locationDetail || [];
+        });
+        
+        // 获取位置的中文名称
+        const getPositionName = (positionCode) => {
+          const positionMap = {
+            'TOP': '上单',
+            'JUG': '打野',
+            'MID': '中单',
+            'AD': '下路',
+            'SUP': '辅助'
+          };
+          return positionMap[positionCode] || positionCode;
+        };
+        
+        // 计算柱状图宽度
+        const getBarHeight = (rate) => {
+          const maxRate = Math.max(...displayedHeroes.value.map(hero => hero.rate));
+          return `${(rate / maxRate) * 100}%`;
+        };
+        
+        // 根据数值返回颜色类名
+        const getBarColorClass = (rate) => {
+          if (rate < 30) return 'level-1';
+          if (rate < 50) return 'level-2';
+          if (rate < 70) return 'level-3';
+          if (rate < 90) return 'level-4';
+          return 'level-5';
+        };
+        
+        // 获取英雄图片URL
+        const getHeroImageUrl = (heroId) => {
+          // 由于我们现在用选手数据，可以尝试使用选手头像
+          const player = window.heroData?.find(p => p.playerId === heroId);
+          if (player && player.playerAvatar) {
+            return player.playerAvatar;
+          }
+          // 如果找不到，使用默认头像
+          return `https://img.crawler.qq.com/lolwebvideo/202501/default_avatar.png`;
+        };
+        
+        // 图片加载失败处理
+        const handleImageError = (event) => {
+          event.target.src = 'https://game.gtimg.cn/images/lol/act/img/champion/default.png';
+        };
+        
+        // 标签页切换处理
+        const handleTabClick = () => {
+          console.log('切换到:', activeTab.value);
+        };
+        
+        // 组件挂载时获取数据
+        onMounted(() => {
+          console.log('页面挂载完成');
+          // 等待一点时间确保 hero.js 已加载
+          setTimeout(() => {
+            console.log('开始获取数据');
+            console.log('window.heroData状态:', window.heroData ? `存在，长度${window.heroData.length}` : '不存在');
+            fetchData();
+          }, 500);
+        });
+        
+        return {
+          loading,
+          dataLoaded,
+          activeTab,
+          displayedHeroes,
+          displayedLocationGroups,
+          getBarHeight,
+          getHeroImageUrl,
+          handleImageError,
+          handleTabClick,
+          getBarColorClass,
+          getPositionName
+        };
+      }
+    })
+    app.use(ElementPlus);
+    app.mount('#app');
+  </script>
+</body>
+</html>

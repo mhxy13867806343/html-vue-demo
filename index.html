@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目导航 - 前端示例集合</title>
+  <link rel="stylesheet" href="/pub/base.css">
+  <!-- 引入Vue 3.2 -->
+  <script src="/pub/vue.global.js"></script>
+  <!-- 引入Element Plus -->
+  <script src="/pub/index.full.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      color: #409eff;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      color: #606266;
+      font-size: 16px;
+    }
+    
+    .project-card {
+      height: 100%;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .project-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .project-card .el-card__header {
+      padding: 15px 20px;
+      font-weight: bold;
+      font-size: 16px;
+      border-bottom: 1px solid #ebeef5;
+      color: #303133;
+    }
+    
+    .demo-link {
+      display: block;
+      margin-bottom: 15px;
+      padding: 12px 15px;
+      background-color: #f0f9eb;
+      border-radius: 4px;
+      border-left: 3px solid #67c23a;
+      transition: all 0.3s;
+    }
+    
+    .demo-link:hover {
+      background-color: #e1f3d8;
+      transform: translateX(5px);
+    }
+    
+    .github-link {
+      background-color: #f2f6fc;
+      border-left-color: #409eff;
+    }
+    
+    .github-link:hover {
+      background-color: #e6f1fc;
+    }
+    
+    .project-description {
+      color: #606266;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    
+    .icon-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .footer {
+      margin-top: 50px;
+      color: #909399;
+      font-size: 14px;
+      padding: 20px 0;
+      border-top: 1px solid #eaeaea;
+    }
+    
+    .footer-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    
+    .footer-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #409eff;
+      text-decoration: none;
+      transition: all 0.3s;
+      padding: 8px 12px;
+      border-radius: 4px;
+      background-color: rgba(64, 158, 255, 0.1);
+    }
+    
+    .footer-link:hover {
+      background-color: rgba(64, 158, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .icon {
+      fill: currentColor;
+    }
+    
+    .copyright {
+      font-weight: 500;
+    }
+    
+    .open-source-info {
+      margin-top: 10px;
+      color: #67c23a;
+      font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 15px;
+      }
+      
+      .header h1 {
+        font-size: 26px;
+      }
+      
+      .header p {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <div class="header">
+        <h1>前端项目导航</h1>
+        <p>包含本地示例和GitHub开源项目的集合</p>
+      </div>
+
+      <el-row :gutter="20" style="margin-bottom: 20px;">
+        <el-col :xs="24" :sm="24" :md="24">
+          <el-card class="project-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <span>本地演示项目</span>
+              </div>
+            </template>
+            <el-row :gutter="20">
+              <el-col :xs="24" :sm="12" :md="12">
+                <a href="./hero-stats.html" target="_blank" class="demo-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-data-analysis /></el-icon>
+                    <span>选手数据排行 - 数据可视化</span>
+                  </div>
+                  <div class="project-description">展示选手的击杀参与率、比赛胜率、死亡率和位置明细等数据统计</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="12">
+                <a href="./tournament-bracket.html" target="_blank" class="demo-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-menu /></el-icon>
+                    <span>竞赛对阵图 - 比赛树形展示</span>
+                  </div>
+                  <div class="project-description">电竞赛事对阵图，展示多轮比赛的对战结果和晋级路线</div>
+                </a>
+              </el-col>
+            </el-row>
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="20" style="margin-bottom: 20px;">
+        <el-col :xs="24" :sm="24" :md="24">
+          <el-card class="project-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <span>Vue & 前端框架项目</span>
+              </div>
+            </template>
+            <el-row :gutter="20">
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/RuoYi-Vue3-FastAPI" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-folder /></el-icon>
+                    <span>RuoYi-Vue3-FastAPI</span>
+                  </div>
+                  <div class="project-description">基于RuoYi的Vue3前端和FastAPI后端的权限管理系统</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/vue-files-drop" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-upload /></el-icon>
+                    <span>vue-files-drop</span>
+                  </div>
+                  <div class="project-description">Vue实现的文件拖拽上传组件</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/vue-net-line" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-connection /></el-icon>
+                    <span>vue-net-line</span>
+                  </div>
+                  <div class="project-description">Vue实现的网络连线可视化组件</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/svelte-demo" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-monitor /></el-icon>
+                    <span>svelte-demo</span>
+                  </div>
+                  <div class="project-description">Svelte框架演示项目</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/astro-demo" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-star /></el-icon>
+                    <span>astro-demo</span>
+                  </div>
+                  <div class="project-description">Astro框架演示项目</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/My-resume" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-user /></el-icon>
+                    <span>My-resume</span>
+                  </div>
+                  <div class="project-description">个人简历项目</div>
+                </a>
+              </el-col>
+            </el-row>
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="20" style="margin-bottom: 20px;">
+        <el-col :xs="24" :sm="24" :md="24">
+          <el-card class="project-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <span>Python & Rust工具项目</span>
+              </div>
+            </template>
+            <el-row :gutter="20">
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/pysshcmd" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-terminal /></el-icon>
+                    <span>pysshcmd</span>
+                  </div>
+                  <div class="project-description">Python实现的SSH命令行工具</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/demo-augment-ai-movie" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-film /></el-icon>
+                    <span>demo-augment-ai-movie</span>
+                  </div>
+                  <div class="project-description">AI电影增强演示项目</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/video_downloader" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-download /></el-icon>
+                    <span>video_downloader</span>
+                  </div>
+                  <div class="project-description">视频下载工具</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/python-Image-size-processing-tool" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-picture /></el-icon>
+                    <span>python-Image-size-processing-tool</span>
+                  </div>
+                  <div class="project-description">Python图像大小处理工具</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/rust-for-swagger-ui-demo" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-document /></el-icon>
+                    <span>rust-for-swagger-ui-demo</span>
+                  </div>
+                  <div class="project-description">Rust实现的Swagger UI演示</div>
+                </a>
+              </el-col>
+              <el-col :xs="24" :sm="12" :md="8">
+                <a href="https://github.com/mhxy13867806343/py-file_monitor" target="_blank" class="demo-link github-link">
+                  <div class="icon-text">
+                    <el-icon><el-icon-view /></el-icon>
+                    <span>py-file_monitor</span>
+                  </div>
+                  <div class="project-description">Python文件监控工具</div>
+                </a>
+              </el-col>
+            </el-row>
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <div class="footer">
+        <div class="footer-content">
+          <p class="copyright">&copy; 2025 前端示例项目集合</p>
+          <div class="footer-links">
+            <a href="https://github.com/mhxy13867806343" target="_blank" class="footer-link">
+              <svg class="icon" viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+                <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+              </svg>
+              <span>GitHub</span>
+            </a>
+            <a href="https://github.com/mhxy13867806343/html-vue-demo" target="_blank" class="footer-link">
+              <svg class="icon" viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+                <path fill-rule="evenodd" d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8zM5 12.25v3.25a.25.25 0 00.4.2l1.45-1.087a.25.25 0 01.3 0L8.6 15.7a.25.25 0 00.4-.2v-3.25a.25.25 0 00-.25-.25h-3.5a.25.25 0 00-.25.25z"></path>
+              </svg>
+              <span>项目仓库</span>
+            </a>
+            <a href="mailto:869710179@qq.com" class="footer-link">
+              <svg class="icon" viewBox="0 0 16 16" width="24" height="24">
+                <path d="M1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0114.25 14H1.75A1.75 1.75 0 010 12.25v-8.5C0 2.784.784 2 1.75 2zm0 1.5a.25.25 0 00-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 00.25-.25v-8.5a.25.25 0 00-.25-.25H1.75zM3.5 6.25a.75.75 0 01.75-.75h7a.75.75 0 010 1.5h-7a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5h4a.75.75 0 000-1.5h-4z"></path>
+              </svg>
+              <span>869710179@qq.com</span>
+            </a>
+          </div>
+          <p class="open-source-info">所有代码均开源，欢迎交流学习</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    const app = createApp({
+      setup() {
+        return {};
+      }
+    });
+    app.use(ElementPlus);
+    app.mount('#app');
+  </script>
+</body>
+</html>
